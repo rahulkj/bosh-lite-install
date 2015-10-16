@@ -339,15 +339,19 @@ post_install_activities() {
 	switch_to_bosh_lite
 
 	IS_VAGRANT_SNAPSHOT_PLUGIN_AVAILABLE=`vagrant plugin list | grep vagrant-multiprovider-snap`
-	if [[ $IS_VAGRANT_SNAPSHOT_PLUGIN_AVAILABLE != '' ]]; then
+	if [[ ! -z $IS_VAGRANT_SNAPSHOT_PLUGIN_AVAILABLE ]]; then
+		logTrace "Taking snapshot of the VM"
 		vagrant snap delete --name=original
 		vagrant suspend && vagrant snap take --name=original
 	fi
 
+	vagrant up && ./bin/add-route
+
 	set +e
-	sleep 2 && logTrace "Executing BOSH VMS to ensure all VMS are running"
-	BOSH_VMS_INSTALLED_SUCCESSFULLY=`bosh vms | grep -o "failing"`
-	if [ ! -z "$BOSH_VMS_INSTALLED_SUCCESSFULLY" ]; then
-		logInfo "Not all BOSH VMs are up. Please check logs for more info"
+	logTrace "Executing BOSH VMS to ensure all VMS are running"
+	BOSH_VMS_INSTALLED_SUCCESSFULLY=`bosh vms | grep -o failing`
+	echo "Output of bosh vms is $BOSH_VMS_INSTALLED_SUCCESSFULLY"
+	if [[ ! -z $BOSH_VMS_INSTALLED_SUCCESSFULLY ]]; then
+		logInfo "Not all BOSH VMs are up. Please check bosh logs for more info. This is false/positive"
 	fi
 }
