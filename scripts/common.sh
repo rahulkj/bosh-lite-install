@@ -21,7 +21,7 @@ export STEM_CELL_TO_INSTALL=latest-bosh-stemcell-warden.tgz
 export STEM_CELL_URL=$AWS_STEM_CELL_URL/$STEM_CELL_TO_INSTALL
 
 export VAGRANT_VERSION=1.7.4
-export BOSH_RUBY_VERSION=2.2.3
+export BOSH_RUBY_VERSION=2.3.0
 
 export RVM_DOWNLOAD_URL=https://get.rvm.io
 
@@ -128,6 +128,7 @@ update_repos() {
 
 	if [ ! -d $CF_RELEASE_DIR ]; then
 		git clone $CF_RELEASE_REPO $CF_RELEASE_DIR >> $LOG_FILE 2>&1
+		rm -rf Gemfile.lock
 	fi
 
 	switch_to_bosh_lite
@@ -199,6 +200,7 @@ generate_diego_deployment_manifest() {
 
 generate_and_upload_release() {
 	cd $1
+	rm -rf Gemfile.lock
 	logCustom 9 "ALERT: " "Upload $2-release $3 "
 	bosh -n upload release releases/$3 >> $LOG_FILE 2>&1
 }
