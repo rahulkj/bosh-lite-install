@@ -16,9 +16,8 @@ export DIEGO_RELEASE_REPO=https://github.com/cloudfoundry-incubator/diego-releas
 export GARDEN_RELEASE_REPO=https://github.com/cloudfoundry-incubator/garden-linux-release.git
 export ETCD_RELEASE_REPO=https://github.com/cloudfoundry-incubator/etcd-release.git
 
-export AWS_STEM_CELL_URL=http://bosh-jenkins-artifacts.s3.amazonaws.com/bosh-stemcell/warden
-export STEM_CELL_TO_INSTALL=latest-bosh-stemcell-warden.tgz
-export STEM_CELL_URL=$AWS_STEM_CELL_URL/$STEM_CELL_TO_INSTALL
+export STEMCELL_URL=https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent
+export STEMCELL_TO_INSTALL=latest-bosh-lite-stemcell.tgz
 
 export VAGRANT_VERSION=1.7.4
 export BOSH_RUBY_VERSION=2.3.0
@@ -123,7 +122,7 @@ update_repos() {
 
 	if [[ $FORCE_DELETE = "-f" ]]; then
 		$EXECUTION_DIR/perform_cleanup.sh
-		#rm -rf $BOSH_LITE_DIR/$STEM_CELL_TO_INSTALL
+		rm -rf $BOSH_LITE_DIR/$STEMCELL_TO_INSTALL
 	fi
 
 	if [ ! -d $CF_RELEASE_DIR ]; then
@@ -281,16 +280,16 @@ download_and_upload_stemcell() {
 
 	set -e
 	logTrace "Download latest warden stemcell"
-	if [ ! -f $STEM_CELL_TO_INSTALL ]; then
+	if [ ! -f $STEMCELL_TO_INSTALL ]; then
 		logTrace "Downloading... warden"
-		wget --progress=bar:force $STEM_CELL_URL -o $LOG_FILE 2>&1
+		wget --progress=bar:force $STEMCELL_URL -O $STEMCELL_TO_INSTALL -o $LOG_FILE 2>&1
 	else
 		logTrace "Warden Stemcell already exists"
 	fi
 
 	set +e
 	logTrace "Upload stemcell"
-	bosh upload stemcell --skip-if-exists $BOSH_LITE_DIR/$STEM_CELL_TO_INSTALL >> $LOG_FILE 2>&1
+	bosh upload stemcell --skip-if-exists $BOSH_LITE_DIR/$STEMCELL_TO_INSTALL >> $LOG_FILE 2>&1
 
 	set -e
 	STEM_CELL_NAME=$( bosh stemcells | grep -o "bosh-warden-[^[:space:]]*" )
