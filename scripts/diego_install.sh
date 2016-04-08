@@ -13,13 +13,16 @@ execute_diego_deployment() {
 	export_release $GARDEN_RELEASE_DIR/releases/garden-linux garden-linux && export GARDEN_LINUX_RELEASE=$RELEASE
 	export_release $ETCD_RELEASE_DIR/releases/etcd etcd && export ETCD_RELEASE=$RELEASE
 
+	switch_to_diego_release
+	git checkout v$DIEGO_LATEST_RELEASE_VERSION && ./scripts/update
+
 	export DEPLOYED_RELEASE=`bosh deployments | grep diego/ | cut -d '|' -f3 | cut -d '/' -f2 | cut -d '+' -f1 | sort -u`
 
-	if [[ $DEPLOYED_RELEASE != '' ]]; then
-		validate_deployed_release $DEPLOYED_RELEASE $DIEGO_LATEST_RELEASE_VERSION true
-	else
+	#if [[ $DEPLOYED_RELEASE != '' ]]; then
+	#	validate_deployed_release $DEPLOYED_RELEASE $DIEGO_LATEST_RELEASE_VERSION true
+	#else
 		export CONTINUE_INSTALL=true
-	fi
+	#fi
 
 	if [[ $CONTINUE_INSTALL = true ]]; then
 		echo
@@ -39,6 +42,8 @@ execute_diego_deployment() {
 		bosh deployment $DIEGO_RELEASE_DIR/bosh-lite/deployments/diego.yml &> $LOG_FILE 2>&1
 		deploy_release $DIEGO_RELEASE_DIR $DIEGO_RELEASE_DIR/bosh-lite/deployments/diego.yml DIEGO
 
+		switch_to_diego_release
+		git checkout master
 		logSuccess "Done installing $DIEGO_RELEASE"
 	fi
 }

@@ -201,7 +201,7 @@ generate_and_upload_release() {
 	cd $1
 	rm -rf Gemfile.lock
 	logCustom 9 "ALERT: " "Upload $2-release $3 "
-	bosh -n upload release releases/$3 >> $LOG_FILE 2>&1
+	bosh -n upload release --skip-if-exists releases/$3 >> $LOG_FILE 2>&1
 }
 
 deploy_release() {
@@ -280,12 +280,8 @@ download_and_upload_stemcell() {
 
 	set -e
 	logTrace "Download latest warden stemcell"
-	if [ ! -f $STEMCELL_TO_INSTALL ]; then
-		logTrace "Downloading... warden"
-		wget --progress=bar:force $STEMCELL_URL -O $STEMCELL_TO_INSTALL -o $LOG_FILE 2>&1
-	else
-		logTrace "Warden Stemcell already exists"
-	fi
+	logTrace "Downloading... warden"
+	wget --progress=bar:force $STEMCELL_URL -O $STEMCELL_TO_INSTALL -o $LOG_FILE 2>&1
 
 	set +e
 	logTrace "Upload stemcell"
