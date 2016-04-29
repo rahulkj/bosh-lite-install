@@ -250,6 +250,7 @@ vagrant_up() {
 			vagrant plugin uninstall vagrant-vmware-fusion
 		fi
 
+		vagrant box update
 		vagrant up --provider=virtualbox >> $LOG_FILE 2>&1
 	else
 		if [ $PLUGIN_INSTALLED == true ]; then
