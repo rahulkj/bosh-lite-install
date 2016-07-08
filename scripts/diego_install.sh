@@ -5,8 +5,14 @@
 execute_diego_deployment() {
 	logTrace "Installing Diego"
 	sync_repo diego-release $DIEGO_RELEASE_REPO diego_release
+	sync_repo etcd-release $ETCD_RELEASE_REPO etcd_release
+	sync_repo cflinuxfs2-rootfs-release $CF_LINUX_ROOTFS_RELEASE_REPO cflinuxfs2_rootfs_release
+	sync_repo garden-linux-release $GARDEN_RELEASE_REPO garden_linux_release
 
 	export_release $CF_RELEASE_DIR/releases cf && export CF_RELEASE=$RELEASE
+	export_release $ETCD_RELEASE_DIR/releases/etcd etcd && export ETCD_RELEASE=$RELEASE
+	export_release $CF_LINUX_ROOTFS_RELEASE_DIR/releases/cflinuxfs2-rootfs cflinuxfs2-rootfs && export CF_LINUX_ROOTFS_RELEASE=$RELEASE
+	export_release $GARDEN_RELEASE_DIR/releases/garden-linux garden-linux && export GARDEN_RELEASE=$RELEASE
 	export_release $DIEGO_RELEASE_DIR/releases diego && export DIEGO_RELEASE=$RELEASE && export DIEGO_LATEST_RELEASE_VERSION=$RELEASE_VERSION
 
 	switch_to_diego_release
@@ -24,9 +30,9 @@ execute_diego_deployment() {
 		generate_diego_deployment_manifest
 
 		generate_and_upload_release $CF_RELEASE_DIR cf $CF_RELEASE
-		bosh upload release https://bosh.io/d/github.com/cloudfoundry-incubator/garden-linux-release
-		bosh upload release https://bosh.io/d/github.com/cloudfoundry-incubator/etcd-release
-		bosh upload release https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-rootfs-release
+		generate_and_upload_release $ETCD_RELEASE_DIR etcd etcd/$ETCD_RELEASE
+		generate_and_upload_release $GARDEN_RELEASE_DIR garden-linux garden-linux/$GARDEN_RELEASE
+		generate_and_upload_release $CF_LINUX_ROOTFS_RELEASE_DIR cflinuxfs2-rootfs/$CF_LINUX_ROOTFS_RELEASE
 		generate_and_upload_release $DIEGO_RELEASE_DIR diego $DIEGO_RELEASE
 
 		bosh deployment $CF_RELEASE_DIR/bosh-lite/deployments/cf.yml &> $LOG_FILE 2>&1

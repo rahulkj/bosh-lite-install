@@ -13,14 +13,15 @@ export BOSH_PASSWORD=admin
 export BOSH_LITE_REPO=https://github.com/cloudfoundry/bosh-lite.git
 export CF_RELEASE_REPO=https://github.com/cloudfoundry/cf-release.git
 export DIEGO_RELEASE_REPO=https://github.com/cloudfoundry-incubator/diego-release.git
+export CF_LINUX_ROOTFS_RELEASE_REPO=https://github.com/cloudfoundry/cflinuxfs2-rootfs-release.git
 export GARDEN_RELEASE_REPO=https://github.com/cloudfoundry-incubator/garden-linux-release.git
 export ETCD_RELEASE_REPO=https://github.com/cloudfoundry-incubator/etcd-release.git
 
 export STEMCELL_URL=https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent
 export STEMCELL_TO_INSTALL=latest-bosh-lite-stemcell.tgz
 
-export VAGRANT_VERSION=1.7.4
-export BOSH_RUBY_VERSION=2.3.0
+export VAGRANT_VERSION=1.8.1
+export BOSH_RUBY_VERSION=2.3.1
 
 export RVM_DOWNLOAD_URL=https://get.rvm.io
 
@@ -173,6 +174,12 @@ switch_to_etcd_release() {
 	cd $ETCD_RELEASE_DIR
 }
 
+switch_to_cflinuxfs2_rootfs_release() {
+	set +e
+	logTrace "Switching to cflinuxfs2_rootfs_release"
+	cd $CF_LINUX_ROOTFS_RELEASE_DIR
+}
+
 create_deployment_dir() {
 	set +e
 	logTrace "Create deployment directory"
@@ -200,8 +207,12 @@ generate_diego_deployment_manifest() {
 generate_and_upload_release() {
 	cd $1
 	rm -rf Gemfile.lock
-	logCustom 9 "ALERT: " "Upload $2-release $3 "
-	bosh -n upload release --skip-if-exists releases/$3 >> $LOG_FILE 2>&1
+	if [ ! -z $3 ]; then
+		logCustom 9 "ALERT: " "Upload $2-release $3 "
+		bosh -n upload release --skip-if-exists releases/$3 >> $LOG_FILE 2>&1
+	else
+		bosh -n create release && bosh -n upload release
+	fi
 }
 
 deploy_release() {

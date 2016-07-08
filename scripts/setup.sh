@@ -46,6 +46,7 @@ export CF_RELEASE_DIR=$BOSH_RELEASES_DIR/cf-release
 export DIEGO_RELEASE_DIR=$BOSH_RELEASES_DIR/diego-release
 export GARDEN_RELEASE_DIR=$BOSH_RELEASES_DIR/garden-linux-release
 export ETCD_RELEASE_DIR=$BOSH_RELEASES_DIR/etcd-release
+export CF_LINUX_ROOTFS_RELEASE_DIR=$BOSH_RELEASES_DIR/cflinuxfs2-rootfs-release
 
 export RETAKE_SNAPSHOT=false
 
