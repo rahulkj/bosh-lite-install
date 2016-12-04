@@ -14,7 +14,7 @@ export BOSH_LITE_REPO=https://github.com/cloudfoundry/bosh-lite.git
 export CF_RELEASE_REPO=https://github.com/cloudfoundry/cf-release.git
 export DIEGO_RELEASE_REPO=https://github.com/cloudfoundry-incubator/diego-release.git
 export CF_LINUX_ROOTFS_RELEASE_REPO=https://github.com/cloudfoundry/cflinuxfs2-rootfs-release.git
-export GARDEN_RELEASE_REPO=https://github.com/cloudfoundry-incubator/garden-linux-release.git
+export GARDEN_RUNC_RELEASE_REPO=https://github.com/cloudfoundry/garden-runc-release.git
 export ETCD_RELEASE_REPO=https://github.com/cloudfoundry-incubator/etcd-release.git
 
 export STEMCELL_URL=https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent
@@ -104,13 +104,13 @@ sync_repo() {
 
 	if [[ ! -f ./scripts/update ]]; then
 		logTrace "Update $1 to sync the sub-modules"
-		./scripts/update &> $LOG_FILE
+		./scripts/update &> $LOG_FILE 2>&1
 	else
-		git pull &> $LOG_FILE
+		git pull &> $LOG_FILE 2>&1
 	fi
 
 	if [[ $4 == true ]]; then
-		bundle install &> $LOG_FILE
+		bundle install &> $LOG_FILE 2>&1
 	fi
 }
 
@@ -141,7 +141,7 @@ update_repos() {
 
 	set -e
 	logTrace "Update cf-release to sync the sub-modules"
-	./scripts/update &> $LOG_FILE
+	./scripts/update >> $LOG_FILE 2>&1
 }
 
 switch_to_bosh_lite() {
@@ -162,10 +162,10 @@ switch_to_diego_release() {
 	cd $DIEGO_RELEASE_DIR
 }
 
-switch_to_garden_linux_release() {
+switch_to_garden_runc_release() {
 	set +e
 	logTrace "Switching to garden-linux-release"
-	cd $GARDEN_RELEASE_DIR
+	cd $GARDEN_RUNC_RELEASE_DIR
 }
 
 switch_to_etcd_release() {
@@ -198,7 +198,7 @@ generate_diego_deployment_manifest() {
 	logTrace "Generating cf release manifest"
 
 	switch_to_cf_release
-	./scripts/generate-bosh-lite-dev-manifest >> $LOG_FILE 2>&1
+	cd /scripts && ./generate-bosh-lite-dev-manifest >> $LOG_FILE 2>&1
 
 	switch_to_diego_release
 	./scripts/generate-bosh-lite-manifests >> $LOG_FILE 2>&1
@@ -211,7 +211,7 @@ generate_and_upload_release() {
 		logCustom 9 "ALERT: " "Upload $2-release $3 "
 		bosh -n upload release --skip-if-exists releases/$3 >> $LOG_FILE 2>&1
 	else
-		bosh -n create release && bosh -n upload release
+		bosh -n create release && bosh -n upload release >> $LOG_FILE 2>&1
 	fi
 }
 
