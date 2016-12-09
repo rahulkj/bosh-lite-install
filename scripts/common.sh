@@ -201,7 +201,7 @@ generate_diego_deployment_manifest() {
 	cd /scripts && ./generate-bosh-lite-dev-manifest >> $LOG_FILE 2>&1
 
 	switch_to_diego_release
-	./scripts/generate-bosh-lite-manifests >> $LOG_FILE 2>&1
+	SQL_FLAVOR='postgres' ./scripts/generate-bosh-lite-manifests >> $LOG_FILE 2>&1
 }
 
 generate_and_upload_release() {
