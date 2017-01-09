@@ -4,7 +4,7 @@ export LOG_FILE=$EXECUTION_DIR/setup.log
 
 rm -rf $LOG_FILE
 
-echo ">>>>>>>>>> Start time: $(date) <<<<<<<<<<<<" >> $LOG_FILE
+echo "&>&>&>&>&> Start time: $(date) <<<<<<<<<<<<" &> $LOG_FILE
 
 export BOSH_DIRECTOR_URL=192.168.50.4:25555
 export BOSH_USER=admin
@@ -21,7 +21,7 @@ export STEMCELL_URL=https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trus
 export STEMCELL_TO_INSTALL=latest-bosh-lite-stemcell.tgz
 
 export VAGRANT_VERSION=1.8.1
-export BOSH_RUBY_VERSION=2.3.1
+export RUBY_VERSION=2.4.0
 
 export RVM_DOWNLOAD_URL=https://get.rvm.io
 
@@ -59,14 +59,14 @@ install_required_tools() {
 		INSTALLED_WGET=`which wget`
 		if [ -z $INSTALLED_WGET ]; then
 			logTrace " Installing wget "
-			brew install wget >> $LOG_FILE 2>&1
+			brew install wget &> $LOG_FILE 2>&1
 		fi
 	fi
 
 	GO_INSTALLED=`which go`
 	if [ -z $GO_INSTALLED ]; then
 		logInfo "Go command not found, please install go"
-		brew install go >> $LOG_FILE 2>&1
+		brew install go &> $LOG_FILE 2>&1
 	fi
 
 
@@ -96,7 +96,7 @@ install_required_tools() {
 # <repo-dir> <repo-url> <switch_to_release> <bundle-required>
 sync_repo() {
 	if [ ! -d "$BOSH_RELEASES_DIR/$1" ]; then
-		git clone $2 $BOSH_RELEASES_DIR/$1 >> $LOG_FILE 2>&1
+		git clone $2 $BOSH_RELEASES_DIR/$1 &> $LOG_FILE 2>&1
 	fi
 
 	set -e
@@ -118,7 +118,7 @@ update_repos() {
 	set -e
 	logTrace "Clone Required Git Repositories"
 	if [ ! -d $BOSH_LITE_DIR ]; then
-		git clone $BOSH_LITE_REPO $BOSH_LITE_DIR >> $LOG_FILE 2>&1
+		git clone $BOSH_LITE_REPO $BOSH_LITE_DIR &> $LOG_FILE 2>&1
 	fi
 
 	if [[ $FORCE_DELETE = "-f" ]]; then
@@ -127,7 +127,7 @@ update_repos() {
 	fi
 
 	if [ ! -d $CF_RELEASE_DIR ]; then
-		git clone $CF_RELEASE_REPO $CF_RELEASE_DIR >> $LOG_FILE 2>&1
+		git clone $CF_RELEASE_REPO $CF_RELEASE_DIR &> $LOG_FILE 2>&1
 		rm -rf Gemfile.lock
 	fi
 
@@ -135,13 +135,13 @@ update_repos() {
 
 	set -e
 	logTrace "Pull latest changes (if any) for bosh-lite"
-	git pull >> $LOG_FILE 2>&1
+	git pull &> $LOG_FILE 2>&1
 
 	switch_to_cf_release
 
 	set -e
 	logTrace "Update cf-release to sync the sub-modules"
-	./scripts/update >> $LOG_FILE 2>&1
+	./scripts/update &> $LOG_FILE 2>&1
 }
 
 switch_to_bosh_lite() {
@@ -190,18 +190,26 @@ generate_diego_deployment_stub() {
 	set +e
 	logTrace "Generating Diego deployment stub"
 	switch_to_diego_release
-	./scripts/print-director-stub > $BOSH_RELEASES_DIR/deployments/bosh-lite/director.yml >> $LOG_FILE 2>&1
+	./scripts/print-director-stub > $BOSH_RELEASES_DIR/deployments/bosh-lite/director.yml &> $LOG_FILE 2>&1
 }
 
-generate_diego_deployment_manifest() {
+generate_cf_deployment_manifest() {
 	set -e
 	logTrace "Generating cf release manifest"
 
 	switch_to_cf_release
-	cd /scripts && ./generate-bosh-lite-dev-manifest >> $LOG_FILE 2>&1
+	./scripts/generate-bosh-lite-dev-manifest &> $LOG_FILE 2>&1
+}
+
+generate_diego_deployment_manifest() {
+	set -e
+	logTrace "Generating diego release manifest"
 
 	switch_to_diego_release
-	SQL_FLAVOR='postgres' ./scripts/generate-bosh-lite-manifests >> $LOG_FILE 2>&1
+	export SQL_FLAVOR='postgres'
+	until ./scripts/generate-bosh-lite-manifests &> $LOG_FILE 2>&1; do
+		echo "Retrying to generate the deployment manifests" &> $LOG_FILE 2>&1
+	done
 }
 
 generate_and_upload_release() {
@@ -209,9 +217,9 @@ generate_and_upload_release() {
 	rm -rf Gemfile.lock
 	if [ ! -z $3 ]; then
 		logCustom 9 "ALERT: " "Upload $2-release $3 "
-		bosh -n upload release --skip-if-exists releases/$3 >> $LOG_FILE 2>&1
+		bosh -n upload release --skip-if-exists releases/$3 &> $LOG_FILE 2>&1
 	else
-		bosh -n create release && bosh -n upload release >> $LOG_FILE 2>&1
+		bosh -n create release &> $LOG_FILE 2>&1 && bosh -n upload release &> $LOG_FILE 2>&1
 	fi
 }
 
@@ -262,18 +270,18 @@ vagrant_up() {
 		fi
 
 		vagrant box update
-		vagrant up --provider=virtualbox >> $LOG_FILE 2>&1
+		vagrant up --provider=virtualbox &> $LOG_FILE 2>&1
 	else
 		if [ $PLUGIN_INSTALLED == true ]; then
 			logInfo "Vagrant Plugin already installed"
 		else
-			vagrant plugin install vagrant-vmware-fusion >> $LOG_FILE 2>&1
-			vagrant plugin license vagrant-vmware-fusion $EXECUTION_DIR/license.lic >> $LOG_FILE 2>&1
+			vagrant plugin install vagrant-vmware-fusion &> $LOG_FILE 2>&1
+			vagrant plugin license vagrant-vmware-fusion $EXECUTION_DIR/license.lic &> $LOG_FILE 2>&1
 
-			vagrant plugin install vagrant-multiprovider-snap >> $LOG_FILE 2>&1
+			vagrant plugin install vagrant-multiprovider-snap &> $LOG_FILE 2>&1
 		fi
 
-		vagrant up --provider=vmware_fusion >> $LOG_FILE 2>&1
+		vagrant up --provider=vmware_fusion &> $LOG_FILE 2>&1
 	fi
 
 	logTrace "Target BOSH to BOSH director"
@@ -283,7 +291,7 @@ vagrant_up() {
 	bosh login $BOSH_USER $BOSH_PASSWORD
 
 	logTrace "Set the routing tables"
-	echo $PASSWORD | sudo -S bin/add-route >> $LOG_FILE 2>&1
+	echo $PASSWORD | sudo -S bin/add-route &> $LOG_FILE 2>&1
 
 }
 
@@ -297,7 +305,7 @@ download_and_upload_stemcell() {
 
 	set +e
 	logTrace "Upload stemcell"
-	bosh upload stemcell --skip-if-exists $BOSH_LITE_DIR/$STEMCELL_TO_INSTALL >> $LOG_FILE 2>&1
+	bosh upload stemcell --skip-if-exists $BOSH_LITE_DIR/$STEMCELL_TO_INSTALL &> $LOG_FILE 2>&1
 
 	set -e
 	STEM_CELL_NAME=$( bosh stemcells | grep -o "bosh-warden-[^[:space:]]*" )

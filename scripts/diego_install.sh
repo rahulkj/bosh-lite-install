@@ -16,7 +16,7 @@ execute_diego_deployment() {
 	export_release $DIEGO_RELEASE_DIR/releases diego && export DIEGO_RELEASE=$RELEASE && export DIEGO_LATEST_RELEASE_VERSION=$RELEASE_VERSION
 
 	switch_to_diego_release
-	git checkout v$DIEGO_LATEST_RELEASE_VERSION && ./scripts/update
+	git checkout v$DIEGO_LATEST_RELEASE_VERSION &> $LOG_FILE 2>&1 && ./scripts/update &> $LOG_FILE 2>&1
 
 	export DEPLOYED_RELEASE=`bosh deployments | grep diego/ | cut -d '|' -f3 | cut -d '/' -f2 | cut -d '+' -f1 | sort -u`
 
@@ -27,6 +27,7 @@ execute_diego_deployment() {
 		create_deployment_dir
 
 		generate_diego_deployment_stub
+		generate_cf_deployment_manifest
 		generate_diego_deployment_manifest
 
 		generate_and_upload_release $CF_RELEASE_DIR cf $CF_RELEASE

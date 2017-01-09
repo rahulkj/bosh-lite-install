@@ -6,7 +6,7 @@ logError () {
 	fi
 
 	echo ">>>>>>>>>> End time: $(date) <<<<<<<<<<<<"
-	echo ">>>>>>>>>> End time: $(date) <<<<<<<<<<<<" >> $LOG_FILE 2>&1
+	echo ">>>>>>>>>> End time: $(date) <<<<<<<<<<<<" &> $LOG_FILE 2>&1
 	exit 1
 }
 
@@ -25,6 +25,6 @@ logTrace () {
 logCustom () {
 	tput setaf $1
 	echo $2 "$3"
-	echo $2 "$3" >> $LOG_FILE 2>&1
+	echo $2 "$3" &> $LOG_FILE 2>&1
 	tput sgr 0
 }

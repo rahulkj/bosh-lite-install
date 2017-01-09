@@ -16,13 +16,13 @@ if [ -z $BREW_INSTALLED ]; then
 			logError "Install Failed, please install brew manually"
 			exit 1
 		fi
-		brew doctor >> $LOG_FILE 2>&1
-		brew update >> $LOG_FILE 2>&1
+		brew doctor &> $LOG_FILE 2>&1
+		brew update &> $LOG_FILE 2>&1
 
 	elif [ "$OS' == 'Ubuntu" ]; then
 		logInfo Install Linuxbrew on Ubuntu
-		echo $2 | sudo apt-get install build-essential curl git ruby texinfo libbz2-dev libcurl4-openssl-dev libexpat-dev libncurses-dev zlib1g-dev >> $LOG_FILE 2>&1
-		git clone $LINUXBREW_GIT_REPO ~/.linuxbrew >> $LOG_FILE 2>&1
+		echo $2 | sudo apt-get install build-essential curl git ruby texinfo libbz2-dev libcurl4-openssl-dev libexpat-dev libncurses-dev zlib1g-dev &> $LOG_FILE 2>&1
+		git clone $LINUXBREW_GIT_REPO ~/.linuxbrew &> $LOG_FILE 2>&1
 		export PATH='$HOME/.linuxbrew/bin:$PATH'
 		export LD_LIBRARY_PATH='$HOME/.linuxbrew/lib:$LD_LIBRARY_PATH'
 	fi

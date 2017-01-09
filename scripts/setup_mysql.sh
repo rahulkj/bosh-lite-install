@@ -17,7 +17,7 @@ execute() {
 clone_repo() {
 	logTrace "Clone Required Git Repositories"
 	if [ ! -d "$MYSQL_RELEASE_DIR" ]; then
-		git clone $MYSQL_RELEASE_GIT_REPO $MYSQL_RELEASE_DIR >> $LOG_FILE 2>&1
+		git clone $MYSQL_RELEASE_GIT_REPO $MYSQL_RELEASE_DIR &> $LOG_FILE 2>&1
 	fi
 
 

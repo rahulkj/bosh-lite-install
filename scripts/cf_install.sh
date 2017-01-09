@@ -17,13 +17,13 @@ execute_cf_deployment() {
 		switch_to_cf_release
 		set -e
 		logTrace "Generate a manifest at manifests/cf-manifest.yml"
-		./scripts/generate-bosh-lite-dev-manifest &> $LOG_FILE 2>&1
+		generate_cf_deployment_manifest
 
 		set +e
 		generate_and_upload_release $CF_RELEASE_DIR cf $CF_RELEASE
 
 		logInfo "Pointing to the cf-release manifest"
-		bosh deployment $CF_RELEASE/bosh-lite/deployments/cf.yml >> $LOG_FILE 2>&1
+		bosh deployment $CF_RELEASE/bosh-lite/deployments/cf.yml &> $LOG_FILE 2>&1
 		deploy_release $CF_RELEASE_DIR $CF_RELEASE/bosh-lite/deployments/cf.yml CF
 
 		logSuccess "Done installing $CF_RELEASE"
