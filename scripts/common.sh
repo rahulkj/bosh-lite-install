@@ -15,7 +15,6 @@ export CF_RELEASE_REPO=https://github.com/cloudfoundry/cf-release.git
 export DIEGO_RELEASE_REPO=https://github.com/cloudfoundry-incubator/diego-release.git
 export CF_LINUX_ROOTFS_RELEASE_REPO=https://github.com/cloudfoundry/cflinuxfs2-rootfs-release.git
 export GARDEN_RUNC_RELEASE_REPO=https://github.com/cloudfoundry/garden-runc-release.git
-export ETCD_RELEASE_REPO=https://github.com/cloudfoundry-incubator/etcd-release.git
 
 export STEMCELL_URL=https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-trusty-go_agent
 export STEMCELL_TO_INSTALL=latest-bosh-lite-stemcell.tgz
@@ -168,12 +167,6 @@ switch_to_garden_runc_release() {
 	cd $GARDEN_RUNC_RELEASE_DIR
 }
 
-switch_to_etcd_release() {
-	set +e
-	logTrace "Switching to etcd-release"
-	cd $ETCD_RELEASE_DIR
-}
-
 switch_to_cflinuxfs2_rootfs_release() {
 	set +e
 	logTrace "Switching to cflinuxfs2_rootfs_release"
@@ -250,7 +243,6 @@ validate_deployed_release() {
 				bosh -n delete deployment cf-warden-diego --force &> $LOG_FILE 2>&1
 				bosh -n delete release diego --force &> $LOG_FILE 2>&1
 				bosh -n delete release garden-linux --force &> $LOG_FILE 2>&1
-				bosh -n delete release etcd --force &> $LOG_FILE 2>&1
 			fi
 			bosh -n delete deployment cf-warden --force &> $LOG_FILE 2>&1
 			bosh -n delete release cf --force &> $LOG_FILE 2>&1
@@ -269,7 +261,7 @@ vagrant_up() {
 			vagrant plugin uninstall vagrant-vmware-fusion
 		fi
 
-		vagrant box update
+		vagrant box update &> $LOG_FILE 2>&1
 		vagrant up --provider=virtualbox &> $LOG_FILE 2>&1
 	else
 		if [ $PLUGIN_INSTALLED == true ]; then
@@ -350,7 +342,7 @@ post_install_activities() {
 	setup_dev_environment
 
 	if [[ $SELECTION = 2 ]]; then
-		cf enable-feature-flag diego_docker
+		cf enable-feature-flag diego_docker &> $LOG_FILE 2>&1
 	fi
 
 	switch_to_bosh_lite
@@ -358,17 +350,19 @@ post_install_activities() {
 	IS_VAGRANT_SNAPSHOT_PLUGIN_AVAILABLE=`vagrant plugin list | grep vagrant-multiprovider-snap`
 	if [[ ! -z $IS_VAGRANT_SNAPSHOT_PLUGIN_AVAILABLE ]]; then
 		logTrace "Taking snapshot of the VM"
-		vagrant snap delete --name=original
-		vagrant suspend && vagrant snap take --name=original
+		vagrant snap delete --name=original &> $LOG_FILE 2>&1
+		vagrant suspend && vagrant snap take --name=original &> $LOG_FILE 2>&1
 	fi
 
-	vagrant up && ./bin/add-route
+	vagrant up &> $LOG_FILE 2>&1 && ./bin/add-route &> $LOG_FILE 2>&1
 
 	set +e
 	logTrace "Executing BOSH VMS to ensure all VMS are running"
 	BOSH_VMS_INSTALLED_SUCCESSFULLY=`bosh vms | grep -o failing`
-	echo "Output of bosh vms is $BOSH_VMS_INSTALLED_SUCCESSFULLY"
+
 	if [[ ! -z $BOSH_VMS_INSTALLED_SUCCESSFULLY ]]; then
-		logInfo "Not all BOSH VMs are up. Please check bosh logs for more info. This is false/positive"
+		logInfo "Not all Deployed Jobs are running. Please check bosh logs for more info. This is false/positive"
+	else
+		logSuccess "All Deployed Jobs's are running"
 	fi
 }
